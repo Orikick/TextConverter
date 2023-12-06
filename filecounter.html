@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Підрахунок символів</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+
+        #output {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Підрахунок символів у текстовому файлі</h1>
+    <input type="file" id="fileInput" accept=".txt, .doc, .docx">
+    <div id="output"></div>
+
+    <script src="https://unpkg.com/mammoth"></script>
+    <script>
+        document.getElementById('fileInput').addEventListener('change', handleFile);
+
+        function handleFile(event) {
+            const fileInput = event.target;
+            const file = fileInput.files[0];
+
+            if (file) {
+                if (file.name.endsWith('.txt')) {
+                    handleTextFile(file);
+                } else if (file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
+                    handleDocFile(file);
+                } else {
+                    alert('Непідтримуваний формат файлу');
+                }
+            }
+        }
+
+        function handleTextFile(file) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const content = e.target.result;
+                const characterCount = countCharacters(content);
+                displayCharacterCount(characterCount);
+            };
+
+            reader.readAsText(file);
+        }
+
+        function handleDocFile(file) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const arrayBuffer = e.target.result;
+                const blob = new Blob([arrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+
+                mammoth.extractRawText({ arrayBuffer: blob })
+                    .then(result => {
+                        const characterCount = countCharacters(result.value);
+                        displayCharacterCount(characterCount);
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        alert('Помилка при обробці файлу DOC/DOCX');
+                    });
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function countCharacters(text) {
+            return text.length;
+        }
+
+        function displayCharacterCount(count) {
+            const outputDiv = document.getElementById('output');
+            outputDiv.textContent = `Кількість символів у файлі: ${count}`;
+        }
+    </script>
+</body>
+</html>
